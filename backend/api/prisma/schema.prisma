@@ -1,0 +1,210 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Pessoa {
+  id                Int               @id @default(autoincrement())
+  nome              String
+  papelNaFamilia    PapelNaFamilia
+  tipoRendaPrincipal TipoRenda
+  ativo             Boolean           @default(true)
+
+  contas            ContaFinanceira[]
+  transacoes        Transacao[]       @relation("TransacoesPessoaResponsavel")
+}
+
+model ContaFinanceira {
+  id              Int              @id @default(autoincrement())
+  nome            String
+  tipo            TipoConta
+  limite          Float?
+  ativo           Boolean          @default(true)
+
+  titularPessoaId Int?
+  titularPessoa   Pessoa?          @relation(fields: [titularPessoaId], references: [id])
+
+  transacoesOrigem  Transacao[]    @relation("TransacoesContaOrigem")
+  transacoesDestino Transacao[]    @relation("TransacoesContaDestino")
+  investimentos     Investimento[]
+}
+
+model Categoria {
+  id          Int           @id @default(autoincrement())
+  nome        String
+  tipoFluxo   TipoFluxo
+  prioridade  Prioridade
+
+  subcategorias Subcategoria[]
+  transacoes    Transacao[]
+}
+
+model Subcategoria {
+  id          Int           @id @default(autoincrement())
+  nome        String
+
+  categoriaId Int
+  categoria   Categoria     @relation(fields: [categoriaId], references: [id])
+
+  transacoes  Transacao[]
+}
+
+model Meta {
+  id             Int          @id @default(autoincrement())
+  nome           String
+  tipo           TipoMeta
+  valorAlvo      Float
+  valorAcumulado Float        @default(0)
+  dataInicio     DateTime     @default(now())
+  dataMeta       DateTime?
+  ativa          Boolean      @default(true)
+
+  transacoes     Transacao[]
+  investimentos  Investimento[]
+}
+
+model Investimento {
+  id                  Int          @id @default(autoincrement())
+  tipoProduto         TipoProdutoInvestimento
+  instituicao         String
+  dataAplicacao       DateTime
+  valorAplicado       Float
+  valorAtual          Float        @default(0)
+  liquidez            Liquidez
+
+  metaId              Int?
+  meta                Meta?        @relation(fields: [metaId], references: [id])
+
+  contaInvestimentoId Int
+  contaInvestimento   ContaFinanceira @relation(fields: [contaInvestimentoId], references: [id])
+}
+
+model Negocio {
+  id                Int          @id @default(autoincrement())
+  nome              String
+  tipo              TipoNegocio
+  ativo             Boolean      @default(true)
+  descricao         String?
+  dataInicioPrevista DateTime?
+  dataInicioReal    DateTime?
+
+  transacoes        Transacao[]
+}
+
+model Transacao {
+  id                Int        @id @default(autoincrement())
+  data              DateTime   @default(now())
+  tipo              TipoTransacao
+  valor             Float
+  descricao         String?
+
+  contaOrigemId     Int?
+  contaOrigem       ContaFinanceira? @relation("TransacoesContaOrigem", fields: [contaOrigemId], references: [id])
+
+  contaDestinoId    Int?
+  contaDestino      ContaFinanceira? @relation("TransacoesContaDestino", fields: [contaDestinoId], references: [id])
+
+  categoriaId       Int
+  categoria         Categoria   @relation(fields: [categoriaId], references: [id])
+
+  subcategoriaId    Int?
+  subcategoria      Subcategoria? @relation(fields: [subcategoriaId], references: [id])
+
+  pessoaResponsavelId Int?
+  pessoaResponsavel   Pessoa?   @relation("TransacoesPessoaResponsavel", fields: [pessoaResponsavelId], references: [id])
+
+  metaId            Int?
+  meta              Meta?       @relation(fields: [metaId], references: [id])
+
+  negocioId         Int?
+  negocio           Negocio?    @relation(fields: [negocioId], references: [id])
+
+  relacionadoAoNegocio Boolean  @default(false)
+  formaPagamento     FormaPagamento
+}
+
+enum PapelNaFamilia {
+  PAI
+  MAE
+  FILHO
+  FILHA
+  OUTRO
+}
+
+enum TipoRenda {
+  CLT
+  AUTONOMO
+  ESTAGIARIO
+  APOSENTADO
+  SEM_RENDA
+}
+
+enum TipoConta {
+  CONTA_CORRENTE
+  CARTEIRA
+  CARTAO_CREDITO
+  POUPANCA
+  CONTA_INVESTIMENTO
+}
+
+enum TipoFluxo {
+  RECEITA
+  DESPESA
+  AMBOS
+}
+
+enum Prioridade {
+  ALTA
+  MEDIA
+  BAIXA
+}
+
+enum TipoMeta {
+  SAUDE
+  DIVIDA
+  RESERVA
+  NEGOCIO
+  LAZER
+  OUTRO
+}
+
+enum TipoProdutoInvestimento {
+  TESOURO_SELIC
+  CDB_LIQUIDEZ_DIARIA
+  CDB_LONGO_PRAZO
+  TESOURO_IPCA
+  LCI_LCA
+  FUNDO
+  OUTRO
+}
+
+enum Liquidez {
+  D_PLUS_0
+  D_PLUS_1
+  D_PLUS_30
+  VENCIMENTO
+}
+
+enum TipoNegocio {
+  LANCHONETE
+  OUTRO
+}
+
+enum TipoTransacao {
+  RECEITA
+  DESPESA
+  TRANSFERENCIA
+}
+
+enum FormaPagamento {
+  DINHEIRO
+  DEBITO
+  CREDITO
+  PIX
+  BOLETO
+  OUTRO
+}

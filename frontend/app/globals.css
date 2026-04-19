@@ -1,0 +1,221 @@
+@import "tailwindcss";
+
+/* ===========================
+   TEMA E VARIÁVEIS
+   =========================== */
+
+:root {
+  color-scheme: dark;
+
+  --background: 0 0% 100%;
+  --foreground: 0 0% 10%;
+  --card: 0 0% 100%;
+  --card-foreground: 0 0% 10%;
+  --border: 0 0% 90%;
+
+  --primary: 50 98% 53%;
+  --primary-foreground: 222 47% 11%;
+
+  --muted: 210 40% 96%;
+  --muted-foreground: 215 15% 40%;
+
+  --accent: 222 84% 56%;
+  --accent-foreground: 0 0% 100%;
+
+  --destructive: 0 72% 51%;
+  --destructive-foreground: 0 0% 100%;
+  --success: 142 70% 45%;
+  --success-foreground: 0 0% 100%;
+
+  --radius: 0.75rem;
+
+  --background-raw: hsl(var(--background));
+  --foreground-raw: hsl(var(--foreground));
+}
+
+/* Tema escuro por padrão */
+.dark {
+  --background: 222 47% 10%;
+  --foreground: 210 40% 98%;
+  --card: 222 47% 13%;
+  --card-foreground: 210 40% 98%;
+  --border: 217 33% 22%;
+
+  --primary: 50 98% 53%;
+  --primary-foreground: 222 47% 11%;
+
+  --muted: 222 47% 20%;
+  --muted-foreground: 215 20% 75%;
+
+  --accent: 222 84% 56%;
+  --accent-foreground: 0 0% 100%;
+
+  --destructive: 0 72% 51%;
+  --destructive-foreground: 0 0% 100%;
+  --success: 142 70% 45%;
+  --success-foreground: 0 0% 100%;
+}
+
+/* ===========================
+   BASE GLOBAL
+   =========================== */
+
+@layer base {
+  @theme inline {
+    --color-background: var(--background-raw);
+    --color-foreground: var(--foreground-raw);
+    --font-sans: var(--font-geist-sans);
+    --font-mono: var(--font-geist-mono);
+  }
+
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+  }
+
+  html,
+  body {
+    margin: 0;
+    padding: 0;
+  }
+
+  body {
+    background-color: hsl(var(--background));
+    color: hsl(var(--foreground));
+    -webkit-font-smoothing: antialiased;
+    font-family: var(--font-geist-sans), system-ui, -apple-system,
+      BlinkMacSystemFont, "Segoe UI", sans-serif;
+    min-height: 100vh;
+  }
+
+  * {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* Tipografia básica */
+  h1,
+  h2,
+  h3,
+  h4 {
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    color: hsl(var(--foreground));
+  }
+
+  h1 {
+    font-size: 2.25rem;
+    line-height: 2.5rem;
+  }
+
+  h2 {
+    font-size: 1.75rem;
+    line-height: 2.1rem;
+  }
+
+  h3 {
+    font-size: 1.25rem;
+    line-height: 1.75rem;
+  }
+
+  p {
+    line-height: 1.6;
+    color: hsl(var(--muted-foreground));
+  }
+
+  strong {
+    color: hsl(var(--foreground));
+    font-weight: 600;
+  }
+
+  /* Links */
+  a {
+    color: hsl(var(--primary));
+    text-decoration-thickness: 1px;
+    text-underline-offset: 4px;
+    text-decoration-color: hsla(var(--primary), 0.4);
+  }
+
+  a:hover {
+    text-decoration-color: hsl(var(--primary));
+  }
+
+  /* Scrollbars */
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: hsl(var(--muted));
+    border-radius: 999px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: hsl(var(--muted-foreground));
+  }
+
+  /* Glow de fundo suave */
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    background: radial-gradient(
+        circle at top left,
+        hsla(var(--primary), 0.18),
+        transparent 55%
+      ),
+      radial-gradient(
+        circle at bottom right,
+        hsla(var(--accent), 0.06),
+        transparent 55%
+      );
+    opacity: 0.75;
+    z-index: -1;
+  }
+}
+
+/* ===========================
+   UTILIDADES LEVES EM CSS PURO
+   (sem @apply)
+   =========================== */
+
+@layer base {
+  /* Container centralizado padrão */
+  .page-shell {
+    max-width: 1120px;
+    margin: 0 auto;
+    padding: 1.5rem;
+  }
+
+  /* Prosa / textos longos */
+  .prose-muted {
+    color: hsl(var(--muted-foreground));
+    font-size: 0.9375rem;
+  }
+
+  .prose-muted p + p {
+    margin-top: 0.75rem;
+  }
+
+  /* Badges genéricos */
+  .badge-soft {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.15rem 0.5rem;
+    border-radius: 999px;
+    border: 1px solid hsl(var(--border));
+    background-color: hsl(var(--muted));
+    color: hsl(var(--muted-foreground));
+    font-size: 0.625rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    font-weight: 500;
+  }
+}
