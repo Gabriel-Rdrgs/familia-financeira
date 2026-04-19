@@ -1,4 +1,13 @@
-import { Body, Controller, Get, Post } from '@nestjs/common';
+// backend/api/src/meta/meta.controller.ts
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  ParseIntPipe,
+  Patch,
+  Post,
+} from '@nestjs/common';
 import { MetaService } from './meta.service';
 import { TipoMeta } from '@prisma/client';
 
@@ -6,7 +15,15 @@ class CreateMetaDto {
   nome: string;
   tipo: TipoMeta;
   valorAlvo: number;
-  dataMeta?: string; // ISO string opcional
+  dataMeta?: string;
+}
+
+class UpdateMetaDto {
+  nome?: string;
+  tipo?: TipoMeta;
+  valorAlvo?: number;
+  dataMeta?: string;
+  ativa?: boolean;
 }
 
 @Controller('metas')
@@ -26,5 +43,13 @@ export class MetaController {
   @Post()
   create(@Body() body: CreateMetaDto) {
     return this.metaService.create(body);
+  }
+
+  @Patch(':id')
+  update(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() body: UpdateMetaDto,
+  ) {
+    return this.metaService.update(id, body);
   }
 }

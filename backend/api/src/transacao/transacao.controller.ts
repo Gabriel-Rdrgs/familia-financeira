@@ -1,16 +1,21 @@
+// backend/api/src/transacao/transacao.controller.ts
 import {
   Body,
   Controller,
+  Delete,
   Get,
+  HttpCode,
+  Param,
+  ParseIntPipe,
+  Patch,
   Post,
   Query,
-  ParseIntPipe,
 } from '@nestjs/common';
 import { TransacaoService } from './transacao.service';
 import { FormaPagamento, TipoTransacao } from '@prisma/client';
 
 class CreateTransacaoDto {
-  data?: string; // ISO string opcional
+  data?: string;
   tipo: TipoTransacao;
   valor: number;
   descricao?: string;
@@ -18,6 +23,22 @@ class CreateTransacaoDto {
   categoriaId: number;
   subcategoriaId?: number;
   formaPagamento: FormaPagamento;
+  relacionadoAoNegocio?: boolean;
+  contaOrigemId?: number;
+  contaDestinoId?: number;
+  metaId?: number;
+  negocioId?: number;
+}
+
+class UpdateTransacaoDto {
+  data?: string;
+  tipo?: TipoTransacao;
+  valor?: number;
+  descricao?: string;
+  pessoaResponsavelId?: number;
+  categoriaId?: number;
+  subcategoriaId?: number;
+  formaPagamento?: FormaPagamento;
   relacionadoAoNegocio?: boolean;
   contaOrigemId?: number;
   contaDestinoId?: number;
@@ -40,10 +61,27 @@ export class TransacaoController {
   @Post()
   create(@Body() body: CreateTransacaoDto) {
     const { data, ...rest } = body;
-
     return this.transacaoService.create({
       ...rest,
       data: data ? new Date(data) : undefined,
     });
+  }
+
+  @Patch(':id')
+  update(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() body: UpdateTransacaoDto,
+  ) {
+    const { data, ...rest } = body;
+    return this.transacaoService.update(id, {
+      ...rest,
+      data: data ? new Date(data) : undefined,
+    });
+  }
+
+  @Delete(':id')
+  @HttpCode(204)
+  remove(@Param('id', ParseIntPipe) id: number) {
+    return this.transacaoService.remove(id);
   }
 }

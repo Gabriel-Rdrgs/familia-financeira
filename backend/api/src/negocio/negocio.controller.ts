@@ -1,9 +1,11 @@
+// backend/api/src/negocio/negocio.controller.ts
 import {
   Body,
   Controller,
   Get,
   Param,
   ParseIntPipe,
+  Patch,
   Post,
   Query,
 } from '@nestjs/common';
@@ -15,6 +17,15 @@ class CreateNegocioDto {
   tipo: TipoNegocio;
   descricao?: string;
   dataInicioPrevista?: string;
+}
+
+class UpdateNegocioDto {
+  nome?: string;
+  tipo?: TipoNegocio;
+  descricao?: string;
+  dataInicioPrevista?: string;
+  dataInicioReal?: string;
+  ativo?: boolean;
 }
 
 @Controller('negocios')
@@ -34,6 +45,14 @@ export class NegocioController {
   @Post()
   create(@Body() body: CreateNegocioDto) {
     return this.negocioService.create(body);
+  }
+
+  @Patch(':id')
+  update(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() body: UpdateNegocioDto,
+  ) {
+    return this.negocioService.update(id, body);
   }
 
   @Get(':id/mensal')

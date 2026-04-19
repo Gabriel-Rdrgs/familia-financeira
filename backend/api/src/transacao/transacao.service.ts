@@ -1,10 +1,7 @@
-import { Injectable } from '@nestjs/common';
+// backend/api/src/transacao/transacao.service.ts
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import {
-  Transacao,
-  TipoTransacao,
-  FormaPagamento,
-} from '@prisma/client';
+import { FormaPagamento, Transacao, TipoTransacao } from '@prisma/client';
 
 interface CreateTransacaoInput {
   data?: Date;
@@ -22,14 +19,14 @@ interface CreateTransacaoInput {
   negocioId?: number;
 }
 
+type UpdateTransacaoInput = Partial<CreateTransacaoInput>;
+
 @Injectable()
 export class TransacaoService {
   constructor(private prisma: PrismaService) {}
 
   findAll(): Promise<Transacao[]> {
-    return this.prisma.transacao.findMany({
-      orderBy: { data: 'desc' },
-    });
+    return this.prisma.transacao.findMany({ orderBy: { data: 'desc' } });
   }
 
   findByMonth(year: number, month: number): Promise<Transacao[]> {
@@ -37,49 +34,44 @@ export class TransacaoService {
     const end = new Date(year, month, 0, 23, 59, 59, 999);
 
     return this.prisma.transacao.findMany({
-      where: {
-        data: {
-          gte: start,
-          lte: end,
-        },
+      where: { data: { gte: start, lte: end } },
+      include: {
+        categoria: true,
+        subcategoria: true,
+        pessoaResponsavel: true,
       },
       orderBy: { data: 'desc' },
     });
   }
 
   create(input: CreateTransacaoInput): Promise<Transacao> {
-    const {
-      data,
-      tipo,
-      valor,
-      descricao,
-      pessoaResponsavelId,
-      categoriaId,
-      subcategoriaId,
-      formaPagamento,
-      relacionadoAoNegocio,
-      contaOrigemId,
-      contaDestinoId,
-      metaId,
-      negocioId,
-    } = input;
-
+    const { data, ...rest } = input;
     return this.prisma.transacao.create({
       data: {
+        ...rest,
         data: data ?? new Date(),
-        tipo,
-        valor,
-        descricao,
-        pessoaResponsavelId,
-        categoriaId,
-        subcategoriaId,
-        formaPagamento,
-        relacionadoAoNegocio: relacionadoAoNegocio ?? false,
-        contaOrigemId,
-        contaDestinoId,
-        metaId,
-        negocioId,
+        relacionadoAoNegocio: input.relacionadoAoNegocio ?? false,
       },
     });
+  }
+
+  async update(id: number, input: UpdateTransacaoInput): Promise<Transacao> {
+    const existe = await this.prisma.transacao.findUnique({ where: { id } });
+    if (!existe) throw new NotFoundException(`Transação #${id} não encontrada`);
+
+    const { data, ...rest } = input;
+    return this.prisma.transacao.update({
+      where: { id },
+      data: {
+        ...rest,
+        ...(data !== undefined ? { data } : {}),
+      },
+    });
+  }
+
+  async remove(id: number): Promise<void> {
+    const existe = await this.prisma.transacao.findUnique({ where: { id } });
+    if (!existe) throw new NotFoundException(`Transação #${id} não encontrada`);
+    await this.prisma.transacao.delete({ where: { id } });
   }
 }
