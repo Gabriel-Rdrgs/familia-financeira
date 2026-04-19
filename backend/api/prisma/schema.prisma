@@ -16,6 +16,7 @@ model Pessoa {
 
   contas            ContaFinanceira[]
   transacoes        Transacao[]       @relation("TransacoesPessoaResponsavel")
+  dividas           Divida[]
 }
 
 model ContaFinanceira {
@@ -95,37 +96,50 @@ model Negocio {
   transacoes        Transacao[]
 }
 
-model Transacao {
-  id                Int        @id @default(autoincrement())
-  data              DateTime   @default(now())
-  tipo              TipoTransacao
-  valor             Float
-  descricao         String?
+// ─── DÍVIDAS ────────────────────────────────────────────────────────────────
 
-  contaOrigemId     Int?
-  contaOrigem       ContaFinanceira? @relation("TransacoesContaOrigem", fields: [contaOrigemId], references: [id])
+model Divida {
+  id               Int           @id @default(autoincrement())
+  credor           String        // "Serasa - Nubank", "Claro", etc.
+  descricao        String?       // observações livres
+  valorOriginal    Float         // quanto devia antes de negociar
+  valorNegociado   Float         // quanto ficou após desconto/acordo
+  totalParcelas    Int           // número total de parcelas
+  valorParcela     Float         // valor fixo de cada parcela
+  diaVencimento    Int           // dia do mês (1-31)
+  dataInicio       DateTime      // data da primeira parcela
+  status           StatusDivida  @default(ATIVA)
 
-  contaDestinoId    Int?
-  contaDestino      ContaFinanceira? @relation("TransacoesContaDestino", fields: [contaDestinoId], references: [id])
+  // relação opcional com pessoa responsável
+  pessoaId         Int?
+  pessoa           Pessoa?       @relation(fields: [pessoaId], references: [id])
 
-  categoriaId       Int
-  categoria         Categoria   @relation(fields: [categoriaId], references: [id])
+  parcelas         ParcelaDivida[]
 
-  subcategoriaId    Int?
-  subcategoria      Subcategoria? @relation(fields: [subcategoriaId], references: [id])
-
-  pessoaResponsavelId Int?
-  pessoaResponsavel   Pessoa?   @relation("TransacoesPessoaResponsavel", fields: [pessoaResponsavelId], references: [id])
-
-  metaId            Int?
-  meta              Meta?       @relation(fields: [metaId], references: [id])
-
-  negocioId         Int?
-  negocio           Negocio?    @relation(fields: [negocioId], references: [id])
-
-  relacionadoAoNegocio Boolean  @default(false)
-  formaPagamento     FormaPagamento
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
 }
+
+model ParcelaDivida {
+  id               Int           @id @default(autoincrement())
+  numeroParcela    Int           // 1, 2, 3...
+  dataVencimento   DateTime
+  valorPrevisto    Float
+  valorPago        Float?        // null = não paga ainda
+  dataPagamento    DateTime?     // null = não paga ainda
+  status           StatusParcela @default(PENDENTE)
+  observacao       String?
+
+  dividaId         Int
+  divida           Divida        @relation(fields: [dividaId], references: [id], onDelete: Cascade)
+
+  // opcional: vincular ao lançamento real de transação
+  transacaoId      Int?          @unique
+
+  createdAt        DateTime      @default(now())
+}
+
+// ─── ENUMS ──────────────────────────────────────────────────────────────────
 
 enum PapelNaFamilia {
   PAI
@@ -207,4 +221,18 @@ enum FormaPagamento {
   PIX
   BOLETO
   OUTRO
+}
+
+enum StatusDivida {
+  ATIVA
+  QUITADA
+  RENEGOCIADA
+  SUSPENSA
+}
+
+enum StatusParcela {
+  PENDENTE
+  PAGA
+  ATRASADA
+  IGNORADA
 }
