@@ -8,15 +8,16 @@ datasource db {
 }
 
 model Pessoa {
-  id                Int               @id @default(autoincrement())
-  nome              String
-  papelNaFamilia    PapelNaFamilia
+  id                 Int               @id @default(autoincrement())
+  nome               String
+  papelNaFamilia     PapelNaFamilia
   tipoRendaPrincipal TipoRenda
-  ativo             Boolean           @default(true)
+  ativo              Boolean           @default(true)
 
-  contas            ContaFinanceira[]
-  transacoes        Transacao[]       @relation("TransacoesPessoaResponsavel")
-  dividas           Divida[]
+  contas             ContaFinanceira[]
+  transacoes         Transacao[]       @relation("TransacoesPessoaResponsavel")
+
+  dividas            Divida[]
 }
 
 model ContaFinanceira {
@@ -85,58 +86,88 @@ model Investimento {
 }
 
 model Negocio {
-  id                Int          @id @default(autoincrement())
-  nome              String
-  tipo              TipoNegocio
-  ativo             Boolean      @default(true)
-  descricao         String?
+  id                 Int          @id @default(autoincrement())
+  nome               String
+  tipo               TipoNegocio
+  ativo              Boolean      @default(true)
+  descricao          String?
   dataInicioPrevista DateTime?
-  dataInicioReal    DateTime?
+  dataInicioReal     DateTime?
 
-  transacoes        Transacao[]
+  transacoes         Transacao[]
+}
+
+model Transacao {
+  id                  Int        @id @default(autoincrement())
+  data                DateTime   @default(now())
+  tipo                TipoTransacao
+  valor               Float
+  descricao           String?
+
+  contaOrigemId       Int?
+  contaOrigem         ContaFinanceira? @relation("TransacoesContaOrigem", fields: [contaOrigemId], references: [id])
+
+  contaDestinoId      Int?
+  contaDestino        ContaFinanceira? @relation("TransacoesContaDestino", fields: [contaDestinoId], references: [id])
+
+  categoriaId         Int
+  categoria           Categoria   @relation(fields: [categoriaId], references: [id])
+
+  subcategoriaId      Int?
+  subcategoria        Subcategoria? @relation(fields: [subcategoriaId], references: [id])
+
+  pessoaResponsavelId Int?
+  pessoaResponsavel   Pessoa?     @relation("TransacoesPessoaResponsavel", fields: [pessoaResponsavelId], references: [id])
+
+  metaId              Int?
+  meta                Meta?       @relation(fields: [metaId], references: [id])
+
+  negocioId           Int?
+  negocio             Negocio?    @relation(fields: [negocioId], references: [id])
+
+  relacionadoAoNegocio Boolean    @default(false)
+  formaPagamento      FormaPagamento
 }
 
 // ─── DÍVIDAS ────────────────────────────────────────────────────────────────
 
 model Divida {
-  id               Int           @id @default(autoincrement())
-  credor           String        // "Serasa - Nubank", "Claro", etc.
-  descricao        String?       // observações livres
-  valorOriginal    Float         // quanto devia antes de negociar
-  valorNegociado   Float         // quanto ficou após desconto/acordo
-  totalParcelas    Int           // número total de parcelas
-  valorParcela     Float         // valor fixo de cada parcela
-  diaVencimento    Int           // dia do mês (1-31)
-  dataInicio       DateTime      // data da primeira parcela
-  status           StatusDivida  @default(ATIVA)
+  id             Int           @id @default(autoincrement())
+  credor         String        // "Serasa - Nubank", "Claro", etc.
+  descricao      String?       // observações livres
+  valorOriginal  Float         // quanto devia antes de negociar
+  valorNegociado Float         // quanto ficou após desconto/acordo
+  totalParcelas  Int           // número total de parcelas
+  valorParcela   Float         // valor fixo de cada parcela
+  diaVencimento  Int           // dia do mês (1-31)
+  dataInicio     DateTime      // data da primeira parcela
+  status         StatusDivida  @default(ATIVA)
 
-  // relação opcional com pessoa responsável
-  pessoaId         Int?
-  pessoa           Pessoa?       @relation(fields: [pessoaId], references: [id])
+  pessoaId       Int?
+  pessoa         Pessoa?       @relation(fields: [pessoaId], references: [id])
 
-  parcelas         ParcelaDivida[]
+  parcelas       ParcelaDivida[]
 
-  createdAt        DateTime      @default(now())
-  updatedAt        DateTime      @updatedAt
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
 }
 
 model ParcelaDivida {
-  id               Int           @id @default(autoincrement())
-  numeroParcela    Int           // 1, 2, 3...
-  dataVencimento   DateTime
-  valorPrevisto    Float
-  valorPago        Float?        // null = não paga ainda
-  dataPagamento    DateTime?     // null = não paga ainda
-  status           StatusParcela @default(PENDENTE)
-  observacao       String?
+  id             Int           @id @default(autoincrement())
+  numeroParcela  Int           // 1, 2, 3...
+  dataVencimento DateTime
+  valorPrevisto  Float
+  valorPago      Float?        // null = não paga ainda
+  dataPagamento  DateTime?     // null = não paga ainda
+  status         StatusParcela @default(PENDENTE)
+  observacao     String?
 
-  dividaId         Int
-  divida           Divida        @relation(fields: [dividaId], references: [id], onDelete: Cascade)
+  dividaId       Int
+  divida         Divida        @relation(fields: [dividaId], references: [id], onDelete: Cascade)
 
-  // opcional: vincular ao lançamento real de transação
-  transacaoId      Int?          @unique
+  transacaoId    Int?          @unique
 
-  createdAt        DateTime      @default(now())
+  createdAt      DateTime      @default(now())
 }
 
 // ─── ENUMS ──────────────────────────────────────────────────────────────────

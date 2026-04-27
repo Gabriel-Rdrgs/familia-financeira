@@ -1,20 +1,18 @@
 // backend/api/src/pessoa/pessoa.service.ts
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { Pessoa } from '@prisma/client';
+import { PapelNaFamilia, Pessoa, TipoRenda } from '@prisma/client';
 
 interface CreatePessoaInput {
   nome: string;
-  email?: string;
-  papel?: string; // ADMIN | MEMBRO | VISUALIZADOR
-  cor?: string;   // cor de identificação visual
+  papelNaFamilia: PapelNaFamilia;
+  tipoRendaPrincipal: TipoRenda;
 }
 
 interface UpdatePessoaInput {
   nome?: string;
-  email?: string;
-  papel?: string;
-  cor?: string;
+  papelNaFamilia?: PapelNaFamilia;
+  tipoRendaPrincipal?: TipoRenda;
   ativo?: boolean;
 }
 
@@ -31,13 +29,31 @@ export class PessoaService {
   }
 
   create(input: CreatePessoaInput): Promise<Pessoa> {
-    return this.prisma.pessoa.create({ data: input });
+    // Aqui garantimos que todos os campos obrigatórios do schema sejam passados:
+    return this.prisma.pessoa.create({
+      data: {
+        nome: input.nome,
+        papelNaFamilia: input.papelNaFamilia,
+        tipoRendaPrincipal: input.tipoRendaPrincipal,
+        ativo: true,
+      },
+    });
   }
 
   async update(id: number, input: UpdatePessoaInput): Promise<Pessoa> {
     const existe = await this.prisma.pessoa.findUnique({ where: { id } });
     if (!existe) throw new NotFoundException(`Pessoa #${id} não encontrada`);
-    return this.prisma.pessoa.update({ where: { id }, data: input });
+
+    return this.prisma.pessoa.update({
+      where: { id },
+      data: {
+        nome: input.nome ?? existe.nome,
+        papelNaFamilia: input.papelNaFamilia ?? existe.papelNaFamilia,
+        tipoRendaPrincipal:
+          input.tipoRendaPrincipal ?? existe.tipoRendaPrincipal,
+        ativo: input.ativo ?? existe.ativo,
+      },
+    });
   }
 
   async delete(id: number): Promise<void> {
